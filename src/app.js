@@ -19,21 +19,27 @@ mongoClient
 app.use(cors());
 app.use(express.json());
 
+
 app.post("/participants", async (req, res) => {
   const name = req.body;
 
   if (!name) return res.status(422).send("Preencha todos os campos");
 
   try {
-    const participant = await db
-      .collection("participants")
-      .findOne({ name: name });
+    const participant = await db.collection("participants").findOne({ name: name });
     if (participant) return res.status(409).send("Usuário já cadastrado");
 
-    await db
-      .collection("participants")
-      .insertOne({ name: name, lastStatus: Date.now });
+    await db.collection("participants").insertOne({ name: name, lastStatus: Date.now });
     res.sendStatus(201);
+  } catch (err) {
+    res.sendStatus(500).send(err.message);
+  }
+});
+
+app.get("/participants", async (req, res) => {
+  try { 
+    const participants = await db.collection("participants").find({}).toArray();
+    res.status(200).send(participants);
   } catch (err) {
     res.sendStatus(500).send(err.message);
   }

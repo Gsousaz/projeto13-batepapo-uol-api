@@ -47,7 +47,7 @@ app.post("/participants", async (req, res) => {
 
     await db
       .collection("participants")
-      .insertOne({ name: name, lastStatus: Number(Date.now())}); // => Inserção do usuário no banco de dados
+      .insertOne({ name: name, lastStatus: Number(Date.now()) }); // => Inserção do usuário no banco de dados
 
     await db.collection("messages").insertOne({
       from: name,
@@ -156,11 +156,17 @@ app.post("/status", async (req, res) => {
     if (!user) {
       res.sendStatus(404);
     }
-    
-    const participant = await db.collection("participants").findOne({ name: user });
+
+    const participant = await db
+      .collection("participants")
+      .findOne({ name: user });
     if (!participant) return res.sendStatus(404);
 
-    db.collection("participants").updateOne({name: user},{$set: {lastStatus: Number(Date.now())}}, { upsert: true });
+    db.collection("participants").updateOne(
+      { name: user },
+      { $set: { lastStatus: Number(Date.now()) } },
+      { upsert: true }
+    );
     res.sendStatus(200);
   } catch (err) {
     res.status(500).send(err.message);
@@ -169,28 +175,30 @@ app.post("/status", async (req, res) => {
 
 //-----------------------INICIO DA REMOÇÃO AUTOMÁTICA DE USUÁRIOS"-----------------------//
 
-
-function atualizarUsers() {
+async function atualizarUsers() {
   const timer = Date.now() - 10000;
-  console.log(timer)
-  const participants = db.collection("participants").find({lastStatus: {$lt:timer}}).toArray()
-    .then((participants) => {
-      participants.map((p)=> {
-        db.collection("messages").insertOne({
+  console.log(timer);
+
+  try {
+    const participants = await db.collection("participants").find({ lastStatus: { $lt: timer } }).toArray();
+
+    participants.map((p) => {
+      db.collection("messages").insertOne({
           from: p.name,
           to: "Todos",
-          text: "sai na sala...",
+          text: "sai da sala...",
           type: "status",
           time: dayjs().format("HH:mm:ss"),
-        }).then().catch()
-        db.collection("participants").deleteOne(p).then().catch();
-      })
-    })
-    .catch((error) => {
-      console.error(error);
+        }
+        .catch(console.error))
+
+      db.collection("participants").deleteOne(p).sendStatus(201).catch(console.error);
     });
+  } catch (error) {
+    console.error(error);
+  }
 }
 
-setInterval(atualizarUsers, 3000)
+setInterval(atualizarUsers, 15000);
 
 app.listen(PORT, () => console.log(`O servidor está rodando na porta ${PORT}`));

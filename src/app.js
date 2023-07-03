@@ -175,29 +175,28 @@ app.post("/status", async (req, res) => {
 
 //-----------------------INICIO DA REMOÇÃO AUTOMÁTICA DE USUÁRIOS"-----------------------//
 
-function atualizarUsers() {
-  const timer = Date.now() - 10000;
-  console.log(timer)
-  const participants = db.collection("participants").find({lastStatus: {$lt:timer}}).toArray()
-  
-  
-  
-  
-  .then((participants) => {
-      participants.map((p)=> {
-        db.collection("messages").insertOne({
-          from: p.name,
+setInterval(async () => {
+  const afkCount = Date.now() - 10000;
+  console.log(afkCount);
+  try {
+    const afkUsers = await db.collection("participants").find({ lastStatus: { $lt: afkCount } }).toArray();
+    if (afkUsers.length > 0) {
+      afkUsers.map(async (u) => {
+        await db.collection("messages").insertOne({
+          from: u.name,
           to: "Todos",
           text: "sai na sala...",
           type: "status",
-          time: dayjs().format("HH:mm:ss"),
-        }).then();
-        db.collection("participants").deleteOne(p).then();
-      })
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-}
-setInterval(atualizarUsers, 15000)
+          time: dayjs().format("HH:mm:ss")
+        });
+        console.log("deleting afkuser")
+        await db.collection("participants").deleteOne(u);
+      });
+    }
+    console.log("Success: 201");
+  } catch (error) {
+    console.error("Error: 400");
+  }
+}, 15000);
+
 app.listen(PORT, () => console.log(`O servidor está rodando na porta ${PORT}`));

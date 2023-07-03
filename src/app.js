@@ -179,7 +179,11 @@ function atualizarUsers() {
   const timer = Date.now() - 10000;
   console.log(timer)
   const participants = db.collection("participants").find({lastStatus: {$lt:timer}}).toArray()
-    .then((participants) => {
+  
+  
+  
+  
+  .then((participants) => {
       participants.map((p)=> {
         db.collection("messages").insertOne({
           from: p.name,
@@ -187,8 +191,8 @@ function atualizarUsers() {
           text: "sai na sala...",
           type: "status",
           time: dayjs().format("HH:mm:ss"),
-        }).then().catch()
-        db.collection("participants").deleteOne(p).then().catch();
+        }).then();
+        db.collection("participants").deleteOne(p).then();
       })
     })
     .catch((error) => {

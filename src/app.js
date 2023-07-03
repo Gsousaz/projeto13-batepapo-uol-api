@@ -175,30 +175,25 @@ app.post("/status", async (req, res) => {
 
 //-----------------------INICIO DA REMOÇÃO AUTOMÁTICA DE USUÁRIOS"-----------------------//
 
-async function atualizarUsers() {
+function atualizarUsers() {
   const timer = Date.now() - 10000;
-  console.log(timer);
-
-  try {
-    const participants = await db.collection("participants").find({ lastStatus: { $lt: timer } }).toArray();
-
-    participants.map((p) => {
-      db.collection("messages").insertOne({
+  console.log(timer)
+  const participants = db.collection("participants").find({lastStatus: {$lt:timer}}).toArray()
+    .then((participants) => {
+      participants.map((p)=> {
+        db.collection("messages").insertOne({
           from: p.name,
           to: "Todos",
-          text: "sai da sala...",
+          text: "sai na sala...",
           type: "status",
           time: dayjs().format("HH:mm:ss"),
-        }
-        .catch(console.error))
-
-      db.collection("participants").deleteOne(p).sendStatus(201).catch(console.error);
+        }).then().catch()
+        db.collection("participants").deleteOne(p).then().catch();
+      })
+    })
+    .catch((error) => {
+      console.error(error);
     });
-  } catch (error) {
-    console.error(error);
-  }
 }
-
-setInterval(atualizarUsers, 15000);
-
+setInterval(atualizarUsers, 15000)
 app.listen(PORT, () => console.log(`O servidor está rodando na porta ${PORT}`));

@@ -82,7 +82,7 @@ app.post("/messages", async (req, res) => {
   const schemaMessage = joi.object({
     to: joi.string().required(),
     text: joi.string().required(),
-    type: joi.any().allow("message", "private_message").only(),
+    type: joi.any().allow("message", "private_message").only().required(),
   });
 
   const validation = schemaMessage.validate(req.body, {
@@ -97,7 +97,7 @@ app.post("/messages", async (req, res) => {
     const participant = await db
       .collection("participants")
       .findOne({ name: user });
-    if (!participant) return res.status(401).send("Permissão Negada");
+    if (!participant) return res.status(422).send("Permissão Negada");
 
     await db.collection("messages").insertOne({
       from: participant.name,
@@ -182,8 +182,8 @@ function atualizarUsers() {
           text: "sai na sala...",
           type: "status",
           time: dayjs().format("HH:mm:ss"),
-        }).then(console.log("mensagem criada")).catch(console.log("mensagem não criada"))
-        db.collection("participants").deleteOne(p).then(console.log("deu bom")).catch(console.log("deu ruim"));
+        }).then().catch()
+        db.collection("participants").deleteOne(p).then().catch();
       })
     })
     .catch((error) => {

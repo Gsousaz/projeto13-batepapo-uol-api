@@ -185,7 +185,7 @@ setInterval(async () => {
         await db.collection("messages").insertOne({
           from: u.name,
           to: "Todos",
-          text: "sai na sala...",
+          text: "sai da sala...",
           type: "status",
           time: dayjs().format("HH:mm:ss")
         });
